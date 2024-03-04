@@ -3,6 +3,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_squared_error
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.metrics import r2_score
+from sklearn.ensemble import GradientBoostingRegressor
 
 
 df = pd.read_csv('data/train.csv')
@@ -22,12 +23,13 @@ df = df.dropna()
 train = df.sample(frac=0.8, random_state=200)
 validation = df.drop(train.index)
 
-# split the columns into features and target
+# split the columns into features and target; ie x y split
 target = 'SalePrice'
-features = df.columns.drop(target)
-
-# put the target in a separate dataframe
+train_x = train.drop(target, axis=1)
 train_y = train[target]
+
+validation_x = validation.drop(target, axis=1)
+validation_y = validation[target]
 
 # handle categorical data #TODO not currently functional
 # encoder = OrdinalEncoder()
@@ -37,20 +39,24 @@ train_y = train[target]
 #         validation[column] = encoder.fit_transform(validation[column].values.reshape(-1, 1))
 
 # create the model
-model = RandomForestRegressor(n_estimators=100, max_depth=10)
+rfr_model = RandomForestRegressor(n_estimators=100, max_depth=10)
 
 # fit the model
-model.fit(train[features], train_y)
+rfr_model.fit(train_x, train_y)
 
 # make predictions
-validation_predictions = model.predict(validation[features])
+validation_predictions = rfr_model.predict(validation_x)
 
 # print the mean squared error
-print(mean_squared_error(validation[target], validation_predictions))
+print(mean_squared_error(validation_y, validation_predictions))
+print(r2_score(validation_y, validation_predictions))
 
-# print r squared error
-print(r2_score(validation[target], validation_predictions))
+# create the model
+gbr_model = GradientBoostingRegressor(loss='squared_error')
 
+gbr_model.fit(train_x, train_y)
+
+print(gbr_model.score(validation_x, validation_y))
 
 # print the names of the features
 # print(features)
