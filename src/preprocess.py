@@ -1,10 +1,9 @@
 import pandas as pd
 import numpy as np
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
-from sklearn.compose import ColumnTransformer, make_column_transformer
+from sklearn.compose import make_column_transformer
 
 
 # Load the data
@@ -12,7 +11,6 @@ df_train = pd.read_csv('../data/train.csv')
 df_test = pd.read_csv("../data/test.csv")
 
 X_train = df_train.drop(columns=["SalePrice"])
-y_train = df_train["SalePrice"]
 
 numeric_columns = X_train.select_dtypes(include=np.number).columns.tolist()
 drop_features = ["Id"]
@@ -124,6 +122,8 @@ preprocessor = make_column_transformer(
     (categorical_transformer, categorical_features),
 )
 
+preprocessor.fit(X_train)
+
 ohe_columns = list(
     preprocessor.named_transformers_["pipeline-4"]
     .named_steps["onehotencoder"]
@@ -136,9 +136,15 @@ X_train_enc = pd.DataFrame(
     preprocessor.transform(X_train), index=X_train.index, columns=new_columns
 )
 
-X_test_enc = pd.DataFrame(
+df_test_enc = pd.DataFrame(
     preprocessor.transform(df_test), index=df_test.index, columns=new_columns
 )
 
-print(X_test_enc.head())
-print(X_train_enc.head())
+# add column SalePrice back to the train data
+X_train_enc["SalePrice"] = df_train["SalePrice"]
+
+# print(X_train_enc.head())
+
+# Save the data
+X_train_enc.to_csv("../data/train_enc.csv", index=False)
+df_test_enc.to_csv("../data/test_enc.csv", index=False)
